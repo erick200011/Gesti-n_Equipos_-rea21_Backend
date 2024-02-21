@@ -33,15 +33,15 @@ const sendMailToUser = (userMail, token) => {
 // send mail with defined transport object
 const sendMailToRecoveryPassword = async(userMail,token)=>{
     let info = await transporter.sendMail({
-    from: 'admin@vet.com',
+    from: 'epalomo154@gmail.com',
     to: userMail,
     subject: "Correo para reestablecer tu contraseña",
     html: `
-    <h1>Sistema de gestión (VET-ESFOT 🐶 😺)</h1>
+    <h1>Sistema de gestión (IAMQ-QUITO 🐶 😺)</h1>
     <hr>
     <a href=${process.env.URL_BACKEND}recuperar-password/${token}>Clic para reestablecer tu contraseña</a>
     <hr>
-    <footer>Grandote te da la Bienvenida!</footer>
+    <footer>IAMQ te da la Bienvenida!</footer>
     `
     });
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
