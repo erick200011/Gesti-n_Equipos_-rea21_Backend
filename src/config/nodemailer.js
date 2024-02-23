@@ -14,19 +14,23 @@ let transporter = nodemailer.createTransport({
 });
 
 const sendMailToUser = (userMail, token) => {
-    let mailOptions = {
-        from: process.env.SMTP_USER,
-        to: userMail,
-        subject: "Verifica tu cuenta",
-        html: `<p>Hola, haz clic <a href="${process.env.URL_BACKEND}confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
-    };
+    return new Promise((resolve, reject) => {
+        let mailOptions = {
+            from: process.env.SMTP_USER,
+            to: userMail,
+            subject: "Verifica tu cuenta",
+            html: `<p>Hola, haz clic <a href="${process.env.URL_BACKEND}/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
+        };
 
-    transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-            console.log(error);
-        } else {
-            console.log('Correo enviado: ' + info.response);
-        }
+        transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+                console.error(error);
+                reject(error); // Rechazar la Promesa en caso de error
+            } else {
+                console.log('Correo enviado: ' + info.response);
+                resolve(info); // Resolver la Promesa en caso de éxito
+            }
+        });
     });
 };
 

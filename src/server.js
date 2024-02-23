@@ -2,7 +2,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors';
-import  superUsuarioRouter  from './routers/super_usuario_routes.js';
+import  router  from './routers/super_usuario_routes.js';
 //const { superUsuarioRouter } = require('./routers/super_usuario_routes.js');
 
 
@@ -25,7 +25,7 @@ app.use(express.json())
 app.get('/',(req,res)=>{
     res.send("Server on")
 })
-app.use('/api',superUsuarioRouter)
+app.use('/api',router)
 
 //Manejo de ruta no encontrada
 app.use((req,res)=>res.status(404).send("Endpoint no encontrado - 404"))

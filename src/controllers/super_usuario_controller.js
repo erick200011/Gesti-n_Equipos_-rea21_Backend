@@ -69,12 +69,13 @@ const registro = async (req, res) => {
     nuevoUsuario.password = await nuevoUsuario.encryptPassword(password);
 
     // Generar y enviar el token de confirmación por correo electrónico
-    const token = nuevoUsuario.crearToken();
-    try{
+    try {
+        const token = await nuevoUsuario.crearToken();  // Esperar la resolución de la Promesa
         sendMailToUser(email, token);
-        console.log("El correo se envio")
-    }catch{
-        console.log("correo no enviado")
+        console.log("El correo se envió");
+    } catch (error) {
+        console.log("Error al generar el token o enviar el correo:", error);
+        return res.status(500).json({ msg: "Error interno del servidor" });
     }
 
     // Responder al cliente para que revise su correo electrónico
@@ -85,20 +86,30 @@ const registro = async (req, res) => {
     // await nuevoUsuario.save();
 };
 
+
 const confirmEmail = async (req, res) => {
     if (!req.params.token) return res.status(400).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
-    const superUsuarioBDD = await SuperUsuario.findOne({ where: { token: req.params.token } });
-    if (!superUsuarioBDD?.token) return res.status(404).json({ msg: "La cuenta ya ha sido confirmada" });
-    superUsuarioBDD.token = null;
-    superUsuarioBDD.confirmEmail = true;
-    await superUsuarioBDD.save();
-    
-   
-    
-    res.status(200).json({ msg: "Token confirmado, ya puedes iniciar sesión" });
-     // Guardar el usuario en la base de datos una vez que se confirme el correo electrónico
-     await nuevoUsuario.save();
+
+    try {
+        const superUsuarioBDD = await SuperUsuario.findOne({ where: { token: req.params.token } });
+
+        if (!superUsuarioBDD?.token) return res.status(404).json({ msg: "La cuenta ya ha sido confirmada" });
+
+        // Actualizar confirmemail a true
+        superUsuarioBDD.confirmEmail = true;
+
+        // Limpiar el token, ya que la cuenta ha sido confirmada
+        superUsuarioBDD.token = null;
+
+        await superUsuarioBDD.save();
+
+        res.status(200).json({ msg: "Token confirmado, ya puedes iniciar sesión" });
+    } catch (error) {
+        console.error("Error al confirmar el correo electrónico:", error.message);
+        res.status(500).json({ msg: "Error del servidor al confirmar el correo electrónico" });
+    }
 };
+
 
 const listarSuperUsuarios = (req,res)=>{
     res.status(200).json({res:'lista de super_usuario registrados'})
