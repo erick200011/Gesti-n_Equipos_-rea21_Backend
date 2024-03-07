@@ -72,9 +72,9 @@ const registro = async (req, res) => {
     try {
         const token = await nuevoUsuario.crearToken();  // Esperar la resolución de la Promesa
         sendMailToUser(email, token);
-        console.log("El correo se envió");
+        //console.log("El correo se envió");
     } catch (error) {
-        console.log("Error al generar el token o enviar el correo:", error);
+       // console.log("Error al generar el token o enviar el correo:", error);
         return res.status(500).json({ msg: "Error interno del servidor" });
     }
 

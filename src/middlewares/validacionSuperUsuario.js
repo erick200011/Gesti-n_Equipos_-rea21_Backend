@@ -1,11 +1,13 @@
 import { check, validationResult } from 'express-validator'
 
+
+//Validacion para llenar todos los campos
 export const validacionSuperUsuario =[
     check(["nombre","apellido","email","password"])
         .exists()
-            .withMessage('Los campos "nombre" "apellido" "email" y/o "password" son obligatorios')
+            .withMessage('Los campos "nombre", "apellido", "email" y/o "password" son obligatorios')
         .notEmpty()
-            .withMessage('Los campos "nombre" "apellido" "email" y/o "password" no pueden estar vacíos')
+            .withMessage('Los campos "nombre", "apellido", "email" y/o "password" no pueden estar vacíos')
         .customSanitizer(value => value?.trim()),
 
     check(["nombre","apellido"])
@@ -15,9 +17,13 @@ export const validacionSuperUsuario =[
             .withMessage('El campo "nombre" y/o "apellido" debe(n) contener solo letras')
         .customSanitizer(value => value?.trim()),
 
+
+//validación para que el correo contenga el dominio de los usuarios al ual apunta esté programa
     check("email")
         .isEmail()
             .withMessage('El campo "email" no es correcto')
+        .matches(/@quito\.gob\.ec$/)
+            .withMessage('El correo debe ser del dominio @quito.gob.ec')
         .customSanitizer(value => value?.trim()),
 
     check("password")
