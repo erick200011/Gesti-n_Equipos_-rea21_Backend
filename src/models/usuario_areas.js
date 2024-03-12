@@ -53,8 +53,9 @@ UsuariosArea.init({
         allowNull: true,
     },
     confirmemail:{
-        type: DataTypes.STRING,
-        allowNull: true,
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     }
 
 }, {

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import SuperUsuario  from "../models/super_usuario.js"; // Asegúrate de importar tu modelo Sequelize aquí
+import UsuariosArea from '../models/usuario_areas.js';
 
 const verificarAutenticacion = async (req, res, next) => {
     if (!req.headers.authorization) {
@@ -23,7 +24,7 @@ const verificarAutenticacion = async (req, res, next) => {
             req.superUsuarioBDD = superUsuarioBDD.toJSON(); // Convertir el modelo Sequelize a objeto JSON
             next();
         } else {
-            return res.status(403).json({ msg: "Lo sentimos, no tienes permisos para acceder a este recurso" });
+            req.usuariosAreaBDD = await UsuariosArea.findById(id).lean().select("password")
         }
     } catch (error) {
         console.error("Error al verificar el token:", error.message);

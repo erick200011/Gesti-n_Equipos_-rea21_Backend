@@ -51,8 +51,28 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 };
 
+
+//Envio de confirmación para el Usuario_Areas:
+const sendMailToUsuarioArea = async(userMail,password)=>{
+    let info = await transporter.sendMail({
+    from: 'admin@vet.com',
+    to: userMail,
+    subject: "Correo de bienvenida",
+    html: `
+    <h1>Sistema de gestión de equipos (Quito-IAMQ 🐶 😺)</h1>
+    <hr>
+    <p>Contraseña de acceso: ${password}</p>
+    <a href=${process.env.URL_BACKEND}usuarioArea/login>Clic para iniciar sesión</a>
+    <hr>
+    <footer>Bienvenid@!</footer>
+    `
+    });
+    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
+}
+
 export {
     sendMailToUser,
     sendMailToRecoveryPassword,
+    sendMailToUsuarioArea
     
 }
