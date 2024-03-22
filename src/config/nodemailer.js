@@ -18,8 +18,9 @@ const sendMailToUser = (userMail, token) => {
         let mailOptions = {
             from: process.env.SMTP_USER,
             to: userMail,
-            subject: "Verifica tu cuenta",
-            html: `<p>Hola, haz clic <a href="${process.env.URL_BACKEND}/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
+            subject: "Bienvenido a IAMQ Quito - Sistema de Gestión de Equipos",
+            html: `<p>Bienvenido a IAMQ Quito - Sistema de Gestión de Equipos.</p>
+                   <p>Por favor, haz clic <a href="${process.env.URL_BACKEND}/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
         };
 
         transporter.sendMail(mailOptions, function(error, info){
@@ -33,6 +34,7 @@ const sendMailToUser = (userMail, token) => {
         });
     });
 };
+
 
 // send mail with defined transport object
 const sendMailToRecoveryPassword = async(userMail,token)=>{

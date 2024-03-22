@@ -27,14 +27,15 @@ const login = async (req, res) => {
         });
 
         if (!superUsuarioBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
-        if (!superUsuarioBDD.confirmemail) return res.status(403).json({ msg: "Lo sentimos, debe verificar su cuenta" });
+
+        if (!superUsuarioBDD.confirmEmail) return res.status(403).json({msg:"Lo sentimos, debe verificar primero su cuenta"});
 
         // Verificar la contraseña
-        const match = await comparePassword(password, superUsuarioBDD.password);
-        if (!match) return res.status(404).json({ msg: "Lo sentimos, la contraseña no es correcta" });
+        const verificarPassword = await comparePassword(password, superUsuarioBDD.password);
+        if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, la contraseña no es correcta" });
 
+        const token = generarJWT(superUsuarioBDD.id, "superUsuario");
 
-        const token = generarJWT(superUsuarioBDD._id,"superUsuario")
         // Si la contraseña coincide, puedes proceder con el inicio de sesión exitoso
         res.status(200).json({
             token,
@@ -42,14 +43,12 @@ const login = async (req, res) => {
             nombre: superUsuarioBDD.nombre,
             apellido: superUsuarioBDD.apellido,
             email: superUsuarioBDD.email,
-            confirmemail: superUsuarioBDD.confirmemail
         });
     } catch (error) {
-        console.error("Error al buscar el usuario:", error);
-        res.status(500).json({ msg: "Error del servidor" });
+        console.error("Error al iniciar sesión:", error.message);
+        res.status(500).json({ msg: "Error interno del servidor" });
     }
 };
-
 
 const perfil=(req,res)=>{
     delete req.superUsuarioBDD.token
@@ -95,12 +94,9 @@ const confirmEmail = async (req, res) => {
 
         if (!superUsuarioBDD?.token) return res.status(404).json({ msg: "La cuenta ya ha sido confirmada" });
 
-        // Actualizar confirmemail a true
-        superUsuarioBDD.confirmEmail = true;
-
-        // Limpiar el token, ya que la cuenta ha sido confirmada
+        // Actualizar confirmemail a true y limpiar el token
+        superUsuarioBDD.confirmemail = true;
         superUsuarioBDD.token = null;
-
         await superUsuarioBDD.save();
 
         res.status(200).json({ msg: "Token confirmado, ya puedes iniciar sesión" });

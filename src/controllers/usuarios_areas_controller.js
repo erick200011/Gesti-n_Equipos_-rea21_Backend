@@ -1,4 +1,4 @@
-import { sendMailToUser, sendMailToRecoveryPassword } from "../config/nodemailer.js";
+import { sendMailToUsuarioArea, sendMailToRecoveryPassword } from "../config/nodemailer.js";
 import UsuariosArea from "../models/usuario_areas.js";
 import generarJWT from "../helpers/crearJWT.js";
 import bcrypt from 'bcrypt'
@@ -10,7 +10,7 @@ const comparePassword = async (password, hashedPassword)=> {
         return match;
     }catch (error){
         //Manejar cualquier error que pueda ocurrir durante la comparación de contraseña
-        console.error("Error al comarar las contraseñas: ", error);
+        console.error("Error al comparar las contraseñas: ", error);
         throw new Error("Error al comparar contraseñas");
     }
 
@@ -65,6 +65,7 @@ const perfil=(req,res)=>{
     res.status(200).json(req.Usuario_AreaBDD)
 }
 
+// Ejemplo en el controlador de registro
 const registro = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -82,11 +83,13 @@ const registro = async (req, res) => {
 
         // Crear el usuario sin guardarlo en la base de datos aún
         const nuevoUsuario = new UsuariosArea(req.body);
-        nuevoUsuario.password = await nuevoUsuario.encryptPassword(password);
 
         // Generar y enviar el token de confirmación por correo electrónico
         const token = await nuevoUsuario.crearToken();
-        await sendMailToUser(email, token);
+        await sendMailToUsuarioArea(email, token); // Aquí usamos tu función sendMailToUsuarioArea
+
+        // Guardar el nuevo usuario en la base de datos
+        await nuevoUsuario.save();
 
         // Responder al cliente para que revise su correo electrónico
         res.status(200).json({ msg: "Revisa tu correo electrónico para confirmar tu cuenta" });

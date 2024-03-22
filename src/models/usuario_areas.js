@@ -10,36 +10,36 @@ class UsuariosArea extends Model {
         return await bcrypt.compare(password, this.password);
     }
 
-    //Método para crear un token
-    async crearToken(){
+    // Método para crear un token
+    async crearToken() {
         const tokenGenerado = Math.random().toString(36).slice(2);
         this.token = tokenGenerado;
         await this.save();
         return tokenGenerado;
     }
+
     async encryptPassword(password) {
         const salt = await bcrypt.genSalt(10);
         return await bcrypt.hash(password, salt);
     }
 }
 
-//Define la escritura de la tabla Usuario_Area 'usuario que se manejara por area'
-
+// Define la estructura de la tabla Usuario_Area 'usuario que se manejará por área'
 UsuariosArea.init({
     idcod_equipo: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true, // Asegura que cada usuario esté asociado a un solo equipo
     },
-    nombre:{
+    nombre: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    apellido:{
+    apellido: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    email:{
+    email: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
@@ -48,26 +48,30 @@ UsuariosArea.init({
         type: DataTypes.STRING,
         allowNull: false,
     },
-    token:{
+    token: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    confirmemail:{
+    confirmemail: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
+    },
+    superusuario_id: {
+        type: DataTypes.INTEGER, // O el tipo de dato apropiado
+        allowNull: false, // No permitir que superusuario_id sea nulo
+        defaultValue: 0, // Asignar un valor predeterminado, como 0
     }
-
 }, {
     sequelize,
     modelName: 'UsuariosArea',
     tableName: 'usuarios_area',
     timestamps: false,
-    hooks:{
-        beforeCreate: async(UsuariosArea, options)=>{
-            //Hash de la contraseña nates de guardarla en la base de datos
+    hooks: {
+        beforeCreate: async (usuarioArea, options) => {
+            // Hash de la contraseña antes de guardarla en la base de datos
             const salt = await bcrypt.genSalt(10);
-            UsuariosArea.password = await bcrypt.hash(UsuariosArea.password, salt);
+            usuarioArea.password = await bcrypt.hash(usuarioArea.password, salt);
         },
     },
 });
