@@ -7,7 +7,9 @@ import sequelize from '../database.js'; // Asegúrate de importar la instancia d
 class SuperUsuario extends Model {
     // Método para verificar si el password ingresado es el mismo de la BDD
     async matchPassword(password) {
-        return await bcrypt.compare(password, this.password);
+        const match= await bcrypt.compare(password, this.password);
+        return { match }; // Devuelve el resultado de la comparación
+
     }
 
     // Método para crear un token

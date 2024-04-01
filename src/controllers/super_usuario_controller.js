@@ -3,18 +3,6 @@ import SuperUsuario  from "../models/super_usuario.js";
 import bcrypt from 'bcrypt'
 import generarJWT from "../helpers/crearJWT.js";
 
-const comparePassword = async (password, hashedPassword) => {
-    try {
-        // Comparar la contraseña proporcionada con el hash almacenado en la base de datos
-        const match = await bcrypt.compare(password, hashedPassword);
-        return match;
-    } catch (error) {
-        // Manejar cualquier error que pueda ocurrir durante la comparación
-        console.error("Error al comparar contraseñas:", error);
-        throw new Error("Error al comparar contraseñas");
-    }
-};
-
 // Dentro de la función login, puedes utilizar esta función para verificar la contraseña
 const login = async (req, res) => {
     const { email, password } = req.body;
@@ -28,10 +16,10 @@ const login = async (req, res) => {
 
         if (!superUsuarioBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
 
-        if (!superUsuarioBDD.confirmEmail) return res.status(403).json({msg:"Lo sentimos, debe verificar primero su cuenta"});
+        if (!superUsuarioBDD.confirmemail) return res.status(403).json({msg:"Lo sentimos, debe verificar primero su cuenta"});
 
         // Verificar la contraseña
-        const verificarPassword = await comparePassword(password, superUsuarioBDD.password);
+        const verificarPassword = await superUsuarioBDD.matchPassword(password)
         if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, la contraseña no es correcta" });
 
         const token = generarJWT(superUsuarioBDD.id, "superUsuario");
@@ -175,8 +163,6 @@ const actualizarPerfil = async (req, res) => {
         res.status(500).json({ msg: "Error del servidor" });
     }
 };
-
-
 
 const actualizarPassword = async (req, res) => {
     const { id } = req.veterinarioBDD; // Obtener el ID del super usuario desde la solicitud
