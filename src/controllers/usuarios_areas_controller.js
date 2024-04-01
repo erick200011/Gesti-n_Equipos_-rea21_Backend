@@ -3,18 +3,6 @@ import UsuariosArea from "../models/usuario_areas.js";
 import generarJWT from "../helpers/crearJWT.js";
 import bcrypt from 'bcrypt'
 
-const comparePassword = async (password, hashedPassword)=> {
-    try{
-        //Comparar la contraseña proporcionada con el hash alamcenado en la base de datos
-        const match = await bcrypt.compare(password, hashedPassword);
-        return match;
-    }catch (error){
-        //Manejar cualquier error que pueda ocurrir durante la comparación de contraseña
-        console.error("Error al comparar las contraseñas: ", error);
-        throw new Error("Error al comparar contraseñas");
-    }
-
-};
 
 //Dentro de la función login, puedes utilizar esta función para verificar la contraseña en la tabla usuarios_areas dentro de la base de datos
 //Logica para Crud
@@ -22,9 +10,8 @@ const comparePassword = async (password, hashedPassword)=> {
 const login = async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
-    }
+    if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+
 
     try {
         const Usuario_AreaBDD = await UsuariosArea.findOne({
@@ -36,8 +23,8 @@ const login = async (req, res) => {
         if (!Usuario_AreaBDD.confirmemail) return res.status(403).json({ msg: "Lo sentimos, primero debe verificar la cuenta" });
 
         // Verificar la contraseña
-        const match = await comparePassword(password, Usuario_AreaBDD.password);
-        if (!match) return res.status(404).json({ msg: "Lo sentimos, la contraseña es incorrecta" });
+        const verificarPassword = await verificarPassword.matchPassword(password)
+        if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, la contraseña es incorrecta" });
 
         const token = generarJWT(Usuario_AreaBDD._id, "UsuariosArea");
 
