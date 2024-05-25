@@ -9,6 +9,8 @@ const sequelize = new Sequelize(connectionString);
 
 export default sequelize;*/
 
+//=========================================//
+
 // Cargar variables de entorno desde un archivo .env (opcional)
 dotenv.config();
 // Configurar la cadena de conexión a tu base de datos PostgreSQL usando variables de entorno

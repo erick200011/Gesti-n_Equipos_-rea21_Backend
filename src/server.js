@@ -5,6 +5,8 @@ import cors from 'cors';
 import  router  from './routers/super_usuario_routes.js';
 import routerUsuariosArea from './routers/usuario_area_routes.js';
 
+//Para Render
+
 // Inicializaciones
 const app = express()
 dotenv.config()
