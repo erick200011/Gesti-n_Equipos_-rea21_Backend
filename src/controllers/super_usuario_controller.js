@@ -6,7 +6,7 @@ import generarJWT from "../helpers/crearJWT.js";
 // Dentro de la función login, puedes utilizar esta función para verificar la contraseña
 const login = async (req, res) => {
     const { email, password } = req.body;
-    if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+    if (Object.values(req.body).includes("")) return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
 
     try {
         const superUsuarioBDD = await SuperUsuario.findOne({ 
@@ -16,11 +16,11 @@ const login = async (req, res) => {
 
         if (!superUsuarioBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
 
-        if (!superUsuarioBDD.confirmemail) return res.status(403).json({msg:"Lo sentimos, debe verificar primero su cuenta"});
+        if (!superUsuarioBDD.confirmemail) return res.status(403).json({ msg: "Lo sentimos, debe verificar primero su cuenta" });
 
         // Verificar la contraseña
-        const verificarPassword = await superUsuarioBDD.matchPassword(password)
-        if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, la contraseña no es correcta" });
+        const verificarPassword = await superUsuarioBDD.matchPassword(password);
+        if (!verificarPassword) return res.status(401).json({ msg: "Lo sentimos, la contraseña no es correcta" });
 
         const token = generarJWT(superUsuarioBDD.id, "superUsuario");
 
@@ -211,8 +211,9 @@ const recuperarPassword = async (req, res) => {
         // Crear un token de recuperación de contraseña
         const token = await superUsuarioBDD.crearToken();
 
-        // Actualizar el token en la base de datos
+        // Actualizar el token y eliminar la contraseña
         superUsuarioBDD.token = token;
+        superUsuarioBDD.password = '';  // Establecer la contraseña a una cadena vacía
         await superUsuarioBDD.save();
 
         // Enviar correo electrónico de recuperación de contraseña
@@ -226,6 +227,7 @@ const recuperarPassword = async (req, res) => {
         res.status(500).json({ msg: "Error interno del servidor" });
     }
 };
+
 
 const comprobarTokenPasword = async (req, res) => {
     const token = req.params.token;

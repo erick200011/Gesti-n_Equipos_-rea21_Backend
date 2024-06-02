@@ -57,11 +57,11 @@ UsuariosArea.init({
         allowNull: false,
         defaultValue: false
     },
-    superusuario_id: {
+    /*superusuario_id: {
         type: DataTypes.INTEGER, // O el tipo de dato apropiado
         allowNull: false, // No permitir que superusuario_id sea nulo
         defaultValue: 0, // Asignar un valor predeterminado, como 0
-    }
+    }*/
 }, {
     sequelize,
     modelName: 'UsuariosArea',
