@@ -1,22 +1,17 @@
-import { sendMailToUsuarioArea, sendMailToRecoveryPassword } from "../config/nodemailer.js";
+import { sendMailToUsuarioArea, sendMailToRecoveryPassword, sendMailToUser } from "../config/nodemailer.js";
 import UsuariosArea from "../models/usuario_areas.js";
 import generarJWT from "../helpers/crearJWT.js";
-import bcrypt from 'bcrypt'
-
-
 //Dentro de la función login, puedes utilizar esta función para verificar la contraseña en la tabla usuarios_areas dentro de la base de datos
 //Logica para Crud
 
 const login = async (req, res) => {
     const { email, password } = req.body;
-
     if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
-
 
     try {
         const Usuario_AreaBDD = await UsuariosArea.findOne({
             where: { email },
-            attributes: ['id', 'idcod_equipo', 'nombre', 'apellido', 'email', 'confirmemail', 'password']
+            attributes: ['id', 'nombre', 'apellido', 'email','password', 'confirmemail','area' ]
         });
 
         if (!Usuario_AreaBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
@@ -32,11 +27,10 @@ const login = async (req, res) => {
         res.status(200).json({
             token,
             id: Usuario_AreaBDD.id,
-            idcod_equipo: Usuario_AreaBDD.idcod_equipo,
             nombre: Usuario_AreaBDD.nombre,
             apellido: Usuario_AreaBDD.apellido,
             email: Usuario_AreaBDD.email,
-            confirmemail: Usuario_AreaBDD.confirmemail
+            area: Usuario_AreaBDD.area,
         });
     } catch (error) {
         console.error("Error al buscar el usuario: ", error);
@@ -54,61 +48,74 @@ const perfil=(req,res)=>{
 
 // Ejemplo en el controlador de registro
 const registro = async (req, res) => {
+    const { email, password } = req.body;
+    // Validación de campos
+    if (Object.values(req.body).includes("")) {
+        return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+    }
+
+    // Verificar si el correo ya está registrado
+    const verificarEmailBDD = await UsuariosArea.findOne({ where: { email } });
+    if (verificarEmailBDD) {
+        return res.status(400).json({ msg: "Lo sentimos, el email ya se encuentra registrado" });
+    }
+
+    // Crear un nuevo usuario sin guardarlo en la base de datos todavía
+    const nuevoUsuario = new UsuariosArea(req.body);
+    nuevoUsuario.password = await nuevoUsuario.encryptPassword(password);
+
+    // Generar y enviar el token de confirmación por correo electrónico
     try {
-        const { email, password } = req.body;
-
-        // Validación de campos
-        if (Object.values(req.body).includes("")) {
-            return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
-        }
-
-        // Verificar si el correo ya está registrado
-        const verificarEmailBDD = await UsuariosArea.findOne({ where: { email } });
-        if (verificarEmailBDD) {
-            return res.status(400).json({ msg: "Lo sentimos, el email ya se encuentra registrado" });
-        }
-
-        // Crear el usuario sin guardarlo en la base de datos aún
-        const nuevoUsuario = new UsuariosArea(req.body);
-
-        // Generar y enviar el token de confirmación por correo electrónico
-        const token = await nuevoUsuario.crearToken();
-        await sendMailToUsuarioArea(email, token); // Aquí usamos tu función sendMailToUsuarioArea
-
-        // Guardar el nuevo usuario en la base de datos
-        await nuevoUsuario.save();
-
-        // Responder al cliente para que revise su correo electrónico
-        res.status(200).json({ msg: "Revisa tu correo electrónico para confirmar tu cuenta" });
+        const token = await nuevoUsuario.crearToken();  // Esperar la resolución de la Promesa
+        await sendMailToUser(email, token);
+        //console.log("El correo se envió");
     } catch (error) {
-        console.error("Error en el registro:", error);
-        res.status(500).json({ msg: "Error interno del servidor" });
+        console.error("Error al generar el token o enviar el correo:", error);
+        return res.status(500).json({ msg: "Error interno del servidor" });
     }
+
+    // Responder al cliente para que revise su correo electrónico
+    res.status(200).json({ msg: "Revisa tu correo electrónico para confirmar tu cuenta" });
+
+    // Una vez que el usuario confirme su correo electrónico, guardar el usuario en la base de datos
+    // (Esto podría hacerse en otro controlador que maneje la confirmación del correo electrónico)
+    // await nuevoUsuario.save();
 };
 
 
-const confirmEmail = async (req, res)=> {
-    if (!req.params.token) return res.status(400).json({msg:"Lo sentimos, no se puede validar la cuenta"});
-    
-    try{
-        const Usuario_AreaBDD = await UsuariosArea.findOne({where:{token: req.params.token}});
+const confirmEmail = async (req, res) => {
+    console.log("req.params:", req.params);
 
-        if (!Usuario_AreaBDD?.token) return res.status(404).json({msg: "La cuenta ya ha sido confirmada"});
+    const token = req.params.token;
+    if (!token) {
+        return res.status(400).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
+    }
 
-        // Actualiza la columna confirmemail de false a true
-        Usuario_AreaBDD.confirmemail = true;
+    try {
+        console.log("Valor del token recibido:", token);
 
-        // Limpia el token, ya que la cuenta ha sido confirmada
-        Usuario_AreaBDD.token = null;
+        const usuarioAreaBDD = await UsuariosArea.findOne({ where: { token } });
+        console.log("Usuario encontrado:", usuarioAreaBDD);
 
-        await Usuario_AreaBDD.save();
+        if (!usuarioAreaBDD) {
+            return res.status(404).json({ msg: "Token inválido o la cuenta ya ha sido confirmada" });
+        }
 
-        res.status(200).json ({msg:"Token confirmado, y puedes iniciar sesión"});
-    } catch(error) {
-        console.error(error);  // Agrega un log para ver el error en la consola (opcional)
-        res.status(500).json({msg: "Error del servidor al confirmar el correo electrónico"});
+        if (usuarioAreaBDD.confirmemail) {
+            return res.status(400).json({ msg: "La cuenta ya ha sido confirmada" });
+        }
+
+        usuarioAreaBDD.confirmemail = true;
+        usuarioAreaBDD.token = null;
+        await usuarioAreaBDD.save();
+
+        res.status(200).json({ msg: "Cuenta confirmada y token eliminado. Puedes iniciar sesión." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Error del servidor al confirmar el correo electrónico" });
     }
 };
+
 
 
 const listarUsuariosAreas =(req,res)=>{
@@ -200,6 +207,7 @@ const actualizarPassword = async (req, res)=>{
 
         res.status(200).json({mgs:"Contraseña actualizada correctamente"});
     }catch(error){
+        console.error("Error al actualizar la contraseña:", error.message);
         res.status(500).json({mgs:"Error del servidor"});
     }
 };
@@ -207,7 +215,6 @@ const actualizarPassword = async (req, res)=>{
 const recuperarPassword = async (req, res)=>{
     const{email}= req.body;
     // Verificamos si se proporciono un corre válido
-
     if (!email){
         return res.status(400).json({msg: "Deber ingresar un correo electrónico"})
     }
@@ -226,6 +233,7 @@ const recuperarPassword = async (req, res)=>{
 
         //Actualizar el token en la base de datos
         Usuario_AreaBDD.token=token;
+        Usuario_AreaBDD.password= ''; //// Establecer la contraseña a una cadena vacía
         await Usuario_AreaBDD.save();
 
         // Enviar correo eléctronico de recuperación de contraseña
@@ -234,7 +242,8 @@ const recuperarPassword = async (req, res)=>{
         //Respuesta existosa
         res.status(200).json({msg:"Revisa tu correo electrónico para restablecer tu contraseña"})
     }catch(error){
-        // Menajr errores
+        // Menejar errores
+        console.error('Error al recuperar contraseña:', error.message);
         res.status(500).json({msg: "Error interno del servidor"});
     }
 };
@@ -249,10 +258,10 @@ const comprobarTokenPasword = async (req, res) => {
     }
     try {
         // Buscar al usuario en la base de datos utilizando el token
-        const superUsuarioBDD = await SuperUsuario.findOne({ where: { token } });
+        const Usuario_AreaBDD = await UsuariosArea.findOne({ where: { token } });
 
         // Verificar si se encontró al usuario y si el token coincide
-        if (!superUsuarioBDD || superUsuarioBDD.token !== token) {
+        if (!Usuario_AreaBDD || Usuario_AreaBDD.token !== token) {
             return res.status(404).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
         }
         // La cuenta ha sido validada, puedes realizar las operaciones necesarias aquí si es necesario
@@ -277,18 +286,18 @@ const nuevoPassword = async (req, res) => {
     }
     try {
         // Buscar al usuario en la base de datos utilizando el token
-        const superUsuarioBDD = await SuperUsuario.findOne({ where: { token: req.params.token } });
+        const Usuario_AreaBDD = await UsuariosArea.findOne({ where: { token: req.params.token } });
         // Verificar si se encontró al usuario y si el token coincide
-        if (!superUsuarioBDD || superUsuarioBDD.token !== req.params.token) {
+        if (!Usuario_AreaBDD || Usuario_AreaBDD.token !== req.params.token) {
             return res.status(404).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
         }
 
         // Actualizar el token y la contraseña del usuario
-        superUsuarioBDD.token = null;
-        superUsuarioBDD.password = await superUsuarioBDD.encryptPassword(password);
+        Usuario_AreaBDD.token = null;
+        Usuario_AreaBDD.password = await Usuario_AreaBDD.encryptPassword(password);
 
         // Guardar los cambios en la base de datos
-        await superUsuarioBDD.save();
+        await Usuario_AreaBDD.save();
 
         res.status(200).json({ msg: "¡Felicitaciones, ya puedes iniciar sesión con tu nueva contraseña!" });
     } catch (error) {
@@ -298,14 +307,32 @@ const nuevoPassword = async (req, res) => {
     }
 };
 
-const eliminarUsuario = async (req,res)=>{
-    const {id} = req.params
-    if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, no existe el usuario del area ${id}`})
-    const {salida} = req.body
-    await UsuariosArea.findByIdAndUpdate(req.params.id,{salida:Date.parse(salida),estado:false})
-    res.status(200).json({msg:"Usuario del area "})
-}
+const eliminarUsuario = async (req, res) => {
+    const { id } = req.params;
+    const { salida } = req.body;
+
+    // Validación de campos
+    if (Object.values(req.body).includes("")) {
+        return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+    }
+
+    try {
+        // Validar si el usuario existe
+        const usuario = await UsuariosArea.findByPk(id);
+        if (!usuario) {
+            return res.status(404).json({ msg: `Lo sentimos, no existe el usuario del área ${id}` });
+        }
+
+        // Actualizar el usuario por su ID
+        await UsuariosArea.update({ salida: Date.parse(salida), estado: false }, { where: { id } });
+
+        // Responder al cliente indicando que el usuario ha sido eliminado
+        res.status(200).json({ msg: "Usuario del área eliminado exitosamente" });
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        res.status(500).json({ msg: "Error interno del servidor" });
+    }
+};
 
 
 export default {

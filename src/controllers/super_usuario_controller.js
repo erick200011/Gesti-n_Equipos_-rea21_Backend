@@ -165,7 +165,7 @@ const actualizarPerfil = async (req, res) => {
 };
 
 const actualizarPassword = async (req, res) => {
-    const { id } = req.veterinarioBDD; // Obtener el ID del super usuario desde la solicitud
+    const { id } = req.superUsuarioBDD; // Obtener el ID del super usuario desde la solicitud
 
     try {
         // Buscar al super usuario por su ID

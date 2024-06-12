@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import superUsuarioController from "../controllers/super_usuario_controller.js";
-import verificarAutenticacion from '../middlewares/autenticacion.js';
+import { verificarAutenticacion} from '../middlewares/autenticacion.js';
 import { validacionSuperUsuario } from '../middlewares/validacionSuperUsuario.js';
 
 // Ruta para iniciar sesión (login)
