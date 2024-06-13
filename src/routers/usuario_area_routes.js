@@ -13,11 +13,11 @@ router.get('/usuarioArea',verificarAutenticacionUsuarioArea,UsuarioArea.listarUs
 //ruta para el detalle del usuario por area registrada
 router.get('/usuarioArea/:id',verificarAutenticacionUsuarioArea,UsuarioArea.detalleUsuarioArea)//Tiene
 //Ruta para el registor de los usuario de areas
-router.post('/usuarioArea/registro'/*,verificarAutenticacion*/,UsuarioArea.registro)//Tiene
+router.post('/usuarioArea/registro',verificarAutenticacion,UsuarioArea.registro)//Tiene
 //ruta para actulizar el perfil de los uaurios por areas
-router.put('/usuarioArea/actualizar/:id',verificarAutenticacionUsuarioArea,UsuarioArea.actualizarPerfil)//Tiene
+router.put('/usuarioArea/actualizar/:id',verificarAutenticacion,verificarAutenticacionUsuarioArea,UsuarioArea.actualizarPerfil)//Tiene
 //ruta para eliminar usuarios de areas
-router.delete('/usuarioArea/eliminar/:id',verificarAutenticacionUsuarioArea,UsuarioArea.eliminarUsuario)//Tiene
+router.delete('/usuarioArea/eliminar/:id',verificarAutenticacion,verificarAutenticacionUsuarioArea,UsuarioArea.eliminarUsuario)//Tiene
 /*---------------------------------------------------------------- */
 // Ruta para confirmar email
 router.get('/usuarioArea/confirmar/:token',UsuarioArea.confirmEmail);
