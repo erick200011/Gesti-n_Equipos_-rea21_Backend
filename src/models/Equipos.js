@@ -1,63 +1,66 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from '../database.js';
+import sequelize from '../database.js'; // Asegúrate de que la conexión a la base de datos esté configurada correctamente
 
 class Equipos extends Model {}
 
 Equipos.init({
     idcod: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
+        type: DataTypes.STRING,
+        primaryKey: true, // Definimos idcod como clave primaria
+        allowNull: false,
     },
     descripcion: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     marca: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     modelos: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     nserie: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     accesorios: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     fabricante: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     caracteristicas: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     con_instalacion: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     con_utilizacion: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     area: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     idsupus: {
-        type: DataTypes.INTEGER,
-        allowNull: false
+        type: DataTypes.STRING,
+        allowNull: true,
     }
 }, {
     sequelize,
     modelName: 'Equipos',
     tableName: 'equipos',
-    timestamps: false
+    timestamps: false,
+    // Excluimos explícitamente la columna 'id'
+    omitNull: true,
+    omitEmpty: true,
 });
 
 export default Equipos;

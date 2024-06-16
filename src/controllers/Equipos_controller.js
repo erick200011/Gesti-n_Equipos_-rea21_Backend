@@ -3,19 +3,45 @@ import Equipos from '../models/Equipos.js';
 // Crear un nuevo equipo
 export const crearEquipo = async (req, res) => {
     try {
-        const usuario = req.superUsuarioBDD || req.usuariosAreaBDD;
+        const usuario = req.usuario;
+
+        if (!usuario) {
+            return res.status(403).json({ msg: "No tienes permiso para realizar esta acción" });
+        }
 
         if (usuario.area && usuario.area !== req.body.area) {
             return res.status(403).json({ msg: "No tienes permiso para crear un equipo en esta área" });
         }
 
-        const equipo = await Equipos.create(req.body);
+        const { idcod, descripcion, marca, modelos, nserie, accesorios, fabricante, caracteristicas, con_instalacion, con_utilizacion, area, idsupus } = req.body;
+        
+        if (!idcod || !descripcion || !marca || !modelos || !nserie || !accesorios || !fabricante || !caracteristicas || !con_instalacion || !con_utilizacion || !area) {
+            return res.status(400).json({ msg: "Todos los campos son obligatorios" });
+        }
+
+        // Crear el equipo sin incluir "id"
+        const equipo = await Equipos.create({
+            idcod,
+            descripcion,
+            marca,
+            modelos,
+            nserie,
+            accesorios,
+            fabricante,
+            caracteristicas,
+            con_instalacion,
+            con_utilizacion,
+            area,
+            idsupus
+        });
+
         res.status(201).json(equipo);
     } catch (error) {
         console.error("Error al crear el equipo:", error);
         res.status(500).json({ msg: "Error al crear el equipo" });
     }
 };
+
 
 // Obtener todos los equipos
 export const obtenerEquipos = async (req, res) => {

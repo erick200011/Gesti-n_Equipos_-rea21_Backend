@@ -3,7 +3,6 @@ import UsuariosArea from "../models/usuario_areas.js";
 import generarJWT from "../helpers/crearJWT.js";
 //Dentro de la función login, puedes utilizar esta función para verificar la contraseña en la tabla usuarios_areas dentro de la base de datos
 //Logica para Crud
-
 const login = async (req, res) => {
     const { email, password } = req.body;
     if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
@@ -11,17 +10,20 @@ const login = async (req, res) => {
     try {
         const Usuario_AreaBDD = await UsuariosArea.findOne({
             where: { email },
-            attributes: ['id', 'nombre', 'apellido', 'email','password', 'confirmemail','area' ]
+            attributes: ['id', 'nombre', 'apellido', 'email', 'password', 'confirmemail', 'area']
         });
 
         if (!Usuario_AreaBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
         if (!Usuario_AreaBDD.confirmemail) return res.status(403).json({ msg: "Lo sentimos, primero debe verificar la cuenta" });
 
-        // Verificar la contraseña
-        const verificarPassword = await verificarPassword.matchPassword(password)
+        // Verificar la contraseña utilizando el método de la instancia
+        const verificarPassword = await Usuario_AreaBDD.matchPassword(password);
+        console.log('contraseña', verificarPassword);
         if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, la contraseña es incorrecta" });
 
-        const token = generarJWT(Usuario_AreaBDD._id, "UsuariosArea");
+        
+
+        const token = generarJWT(Usuario_AreaBDD.id, "UsuariosArea");
 
         // Si la contraseña coincide, puedes proceder con el inicio de sesión exitoso
         res.status(200).json({
@@ -37,6 +39,9 @@ const login = async (req, res) => {
         res.status(500).json({ msg: "Error del servidor" });
     }
 };
+
+export { login };
+
 
 
 const perfil=(req,res)=>{

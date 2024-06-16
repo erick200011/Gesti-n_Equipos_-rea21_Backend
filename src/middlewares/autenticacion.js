@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import SuperUsuario from "../models/super_usuario.js";
-import UsuariosArea from "../models/usuario_areas.js"; // Asegúrate de importar tu modelo Sequelize aquí
+import UsuariosArea from "../models/usuario_areas.js";
 
 const verificarToken = async (token) => {
     try {
