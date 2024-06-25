@@ -1,7 +1,7 @@
 import  { sendMailToUser, sendMailToRecoveryPassword} from "../config/nodemailer.js";
 import SuperUsuario  from "../models/super_usuario.js";
-import bcrypt from 'bcrypt'
 import generarJWT from "../helpers/crearJWT.js";
+import bcrypt from 'bcryptjs';
 
 // Dentro de la función login, puedes utilizar esta función para verificar la contraseña
 const login = async (req, res) => {
@@ -9,22 +9,19 @@ const login = async (req, res) => {
     if (Object.values(req.body).includes("")) return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
 
     try {
-        const superUsuarioBDD = await SuperUsuario.findOne({ 
+        const superUsuarioBDD = await SuperUsuario.findOne({
             where: { email },
             attributes: ['id', 'nombre', 'apellido', 'email', 'confirmemail', 'password']
         });
 
         if (!superUsuarioBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
-
         if (!superUsuarioBDD.confirmemail) return res.status(403).json({ msg: "Lo sentimos, debe verificar primero su cuenta" });
 
-        // Verificar la contraseña
         const verificarPassword = await superUsuarioBDD.matchPassword(password);
         if (!verificarPassword) return res.status(401).json({ msg: "Lo sentimos, la contraseña no es correcta" });
 
         const token = generarJWT(superUsuarioBDD.id, "superUsuario");
 
-        // Si la contraseña coincide, puedes proceder con el inicio de sesión exitoso
         res.status(200).json({
             token,
             id: superUsuarioBDD.id,
@@ -38,49 +35,50 @@ const login = async (req, res) => {
     }
 };
 
-const perfil=(req,res)=>{
-    delete req.superUsuarioBDD.token
-    delete req.superUsuarioBDD.confirmEmail
-    delete req.superUsuarioBDD._v
-    res.status(200).json(req.superUsuarioBDD)
-}
+const perfil = (req, res) => {
+    const usuario = req.usuario;
+
+    if (!usuario) {
+        return res.status(404).json({ msg: "Usuario no encontrado" });
+    }
+
+    // Excluir campos sensibles si es necesario (aunque ya excluiste 'password' en el middleware)
+    delete usuario.token;
+    delete usuario.confirmemail;
+
+    res.status(200).json(usuario);
+};
 
 const registro = async (req, res) => {
     const { email, password } = req.body;
     if (Object.values(req.body).includes("")) return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+
     const verificarEmailBDD = await SuperUsuario.findOne({ where: { email: email } });
     if (verificarEmailBDD) return res.status(400).json({ msg: "Lo sentimos, el email ya se encuentra registrado" });
-    
-    // Crear un nuevo usuario sin guardarlo en la base de datos todavía
-    const nuevoUsuario = new SuperUsuario(req.body);
-    nuevoUsuario.password = await nuevoUsuario.encryptPassword(password);
 
-    // Generar y enviar el token de confirmación por correo electrónico
+    // Crear un nuevo usuario y encriptar la contraseña en el hook
+    const nuevoUsuario = new SuperUsuario(req.body);
+
     try {
-        const token = await nuevoUsuario.crearToken();  // Esperar la resolución de la Promesa
+        const token = await nuevoUsuario.crearToken();
         sendMailToUser(email, token);
-        //console.log("El correo se envió");
+        await nuevoUsuario.save(); // Guardar el usuario en la base de datos después de generar el token
+        res.status(200).json({ msg: "Revisa tu correo electrónico para confirmar tu cuenta" });
     } catch (error) {
-       // console.log("Error al generar el token o enviar el correo:", error);
         return res.status(500).json({ msg: "Error interno del servidor" });
     }
-
-    // Responder al cliente para que revise su correo electrónico
-    res.status(200).json({ msg: "Revisa tu correo electrónico para confirmar tu cuenta" });
-
-    // Una vez que el usuario confirme su correo electrónico, guardar el usuario en la base de datos
-    // (Esto podría hacerse en otro controlador que maneje la confirmación del correo electrónico)
-    // await nuevoUsuario.save();
 };
 
-
 const confirmEmail = async (req, res) => {
-    if (!req.params.token) return res.status(400).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
+    const { token } = req.params;
+    if (!token) return res.status(400).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
 
     try {
-        const superUsuarioBDD = await SuperUsuario.findOne({ where: { token: req.params.token } });
+        const superUsuarioBDD = await SuperUsuario.findOne({ where: { token } });
 
-        if (!superUsuarioBDD?.token) return res.status(404).json({ msg: "La cuenta ya ha sido confirmada" });
+        if (!superUsuarioBDD) {
+            return res.status(404).json({ msg: "Token inválido o la cuenta ya ha sido confirmada" });
+        }
 
         // Actualizar confirmemail a true y limpiar el token
         superUsuarioBDD.confirmemail = true;
@@ -93,6 +91,7 @@ const confirmEmail = async (req, res) => {
         res.status(500).json({ msg: "Error del servidor al confirmar el correo electrónico" });
     }
 };
+
 
 
 const listarSuperUsuarios = (req,res)=>{
@@ -165,7 +164,19 @@ const actualizarPerfil = async (req, res) => {
 };
 
 const actualizarPassword = async (req, res) => {
-    const { id } = req.superUsuarioBDD; // Obtener el ID del super usuario desde la solicitud
+    const { id } = req.usuario; // Obtener el ID del super usuario desde la solicitud
+
+    const { passwordactual, passwordnuevo, confirmpassword } = req.body;
+
+    // Verificar si los campos están presentes
+    if (!passwordactual || !passwordnuevo || !confirmpassword) {
+        return res.status(400).json({ msg: "Todos los campos son obligatorios" });
+    }
+
+    // Verificar si la nueva contraseña y la confirmación de la contraseña coinciden
+    if (passwordnuevo !== confirmpassword) {
+        return res.status(400).json({ msg: "La nueva contraseña y la confirmación no coinciden" });
+    }
 
     try {
         // Buscar al super usuario por su ID
@@ -177,13 +188,13 @@ const actualizarPassword = async (req, res) => {
         }
 
         // Verificar si la contraseña actual es correcta
-        const verificarPassword = await superUsuarioBDD.matchPassword(req.body.passwordactual);
+        const verificarPassword = await superUsuarioBDD.matchPassword(passwordactual);
         if (!verificarPassword) {
             return res.status(404).json({ msg: "Lo sentimos, la contraseña actual no es correcta" });
         }
 
         // Actualizar la contraseña del super usuario
-        superUsuarioBDD.password = await superUsuarioBDD.encryptPassword(req.body.passwordnuevo);
+        superUsuarioBDD.password = await superUsuarioBDD.encryptPassword(passwordnuevo);
         await superUsuarioBDD.save();
 
         res.status(200).json({ msg: "Contraseña actualizada correctamente" });

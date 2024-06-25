@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import superUsuarioController from "../controllers/super_usuario_controller.js";
 import { verificarAutenticacion} from '../middlewares/autenticacion.js';
-import { validacionSuperUsuario } from '../middlewares/validacionSuperUsuario.js';
+import { validacionSuperUsuario, validacionActualizarPassword, validarActualizacionPassword } from '../middlewares/validacionSuperUsuario.js';
 
 // Ruta para iniciar sesión (login)
 router.post('/login', superUsuarioController.login);
@@ -24,18 +24,18 @@ router.post('/recuperar-password', superUsuarioController.recuperarPassword);
 router.get('/recuperar-password/:token', superUsuarioController.comprobarTokenPasword);
 
 // Ruta para crear nueva contraseña con token de recuperación
-router.post('/nuevo-password/:token', superUsuarioController.nuevoPassword);
+router.post('/nuevo-password/:token',validacionActualizarPassword, superUsuarioController.nuevoPassword);
 
 // Ruta para obtener perfil del usuario
 router.get('/perfil',verificarAutenticacion, superUsuarioController.perfil);
 
-// Ruta para actualizar contraseña del veterinario
-router.put('/usuario/actualizarpassword',verificarAutenticacion, superUsuarioController.actualizarPassword);
+// Ruta para actualizar contraseña del usuario admin
+router.put('/usuario/actualizarpassword',verificarAutenticacion,validarActualizacionPassword, superUsuarioController.actualizarPassword);
 
-// Ruta para obtener detalle de un veterinario por su ID
+// Ruta para obtener detalle de un usuario admin por su ID
 router.get('/usuario/:id',verificarAutenticacion, superUsuarioController.detalleSuperUsuarios);
 
-// Ruta para actualizar perfil de un veterinario por su ID
+// Ruta para actualizar perfil de un usuario admin por su ID
 router.put('/usuario/:id',verificarAutenticacion ,superUsuarioController.actualizarPerfil);
 
 export default router;

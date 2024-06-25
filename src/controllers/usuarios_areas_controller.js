@@ -5,43 +5,50 @@ import generarJWT from "../helpers/crearJWT.js";
 //Logica para Crud
 const login = async (req, res) => {
     const { email, password } = req.body;
-    if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+    if (!email || !password) {
+        return res.status(400).json({ msg: "Por favor, proporciona correo electrónico y contraseña" });
+    }
 
     try {
-        const Usuario_AreaBDD = await UsuariosArea.findOne({
+        const usuario_AreaBDD = await UsuariosArea.findOne({
             where: { email },
             attributes: ['id', 'nombre', 'apellido', 'email', 'password', 'confirmemail', 'area']
         });
 
-        if (!Usuario_AreaBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
-        if (!Usuario_AreaBDD.confirmemail) return res.status(403).json({ msg: "Lo sentimos, primero debe verificar la cuenta" });
+        if (!usuario_AreaBDD) {
+            return res.status(404).json({ msg: "Usuario no encontrado" });
+        }
 
-        // Verificar la contraseña utilizando el método de la instancia
-        const verificarPassword = await Usuario_AreaBDD.matchPassword(password);
-        console.log('contraseña', verificarPassword);
-        if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, la contraseña es incorrecta" });
+        if (!usuario_AreaBDD.confirmemail) {
+            return res.status(403).json({ msg: "Por favor, verifica tu cuenta antes de iniciar sesión" });
+        }
 
-        
+        // Verificar la contraseña utilizando el método de instancia
+        const verificarPassword = await usuario_AreaBDD.matchPassword(password);
+        console.log('Contraseña ingresada para comparar: ', password);
+        console.log('Contraseña almacenada: ', usuario_AreaBDD.password);
+        console.log('Resultado de comparación: ', verificarPassword);
 
-        const token = generarJWT(Usuario_AreaBDD.id, "UsuariosArea");
+        if (!verificarPassword) {
+            return res.status(401).json({ msg: "Contraseña incorrecta" });
+        }
 
-        // Si la contraseña coincide, puedes proceder con el inicio de sesión exitoso
+        // Generar token JWT y responder con la información del usuario
+        const token = generarJWT(usuario_AreaBDD.id, "UsuariosArea");
+
         res.status(200).json({
             token,
-            id: Usuario_AreaBDD.id,
-            nombre: Usuario_AreaBDD.nombre,
-            apellido: Usuario_AreaBDD.apellido,
-            email: Usuario_AreaBDD.email,
-            area: Usuario_AreaBDD.area,
+            id: usuario_AreaBDD.id,
+            nombre: usuario_AreaBDD.nombre,
+            apellido: usuario_AreaBDD.apellido,
+            email: usuario_AreaBDD.email,
+            area: usuario_AreaBDD.area,
         });
     } catch (error) {
         console.error("Error al buscar el usuario: ", error);
         res.status(500).json({ msg: "Error del servidor" });
     }
 };
-
-export { login };
-
 
 
 const perfil=(req,res)=>{
@@ -67,7 +74,9 @@ const registro = async (req, res) => {
 
     // Crear un nuevo usuario sin guardarlo en la base de datos todavía
     const nuevoUsuario = new UsuariosArea(req.body);
+    console.log("Contraseña antes de hash: ", password);
     nuevoUsuario.password = await nuevoUsuario.encryptPassword(password);
+    console.log("Contraseña después de hash: ", nuevoUsuario.password);
 
     // Generar y enviar el token de confirmación por correo electrónico
     try {
@@ -188,34 +197,39 @@ const actualizarPerfil = async (req,res) => {
     }
 };
 
-const actualizarPassword = async (req, res)=>{
-    const {id} = req.Usuario_AreaBDD; // Obtener  el ID del usuario por area desde la solicitud
+const actualizarPassword = async (req, res) => {
+    const { id } = req.usuario;
 
-    try{
-        //Busca al usuario por su ID
+    if (!id) {
+        return res.status(400).json({ msg: "ID de usuario no está definido en la solicitud" });
+    }
+
+    try {
+        // Busca al usuario por su ID
         const Usuario_AreaBDD = await UsuariosArea.findByPk(id);
 
-        // Verificar si se encontró al Usuario por area
-        if(!Usuario_AreaBDD){
-            return res.status(404).json({msg: `Lo sentimos, no existe el usuario de área con ID ${id}`})
+        // Verificar si se encontró al Usuario por área
+        if (!Usuario_AreaBDD) {
+            return res.status(404).json({ msg: `Lo sentimos, no existe el usuario de área con ID ${id}` });
         }
 
-        //Verifica si la contraseña actal es correcta
-        const verificarPassword = await Usuario_AreaBDD.matchPassword(req.body.passwordactual) ;
-        if (!verificarPassword){
-            return res.status(404).json({mgs: "Lo sentimos, la contraseña actual no es la correcta "})
+        // Verifica si la contraseña actual es correcta
+        const verificarPassword = await Usuario_AreaBDD.matchPassword(req.body.passwordactual);
+        if (!verificarPassword) {
+            return res.status(404).json({ msg: "Lo sentimos, la contraseña actual no es la correcta" });
         }
 
-        //Actualizar la contraseña se usuario por areas
+        // Actualizar la contraseña del usuario por áreas
         Usuario_AreaBDD.password = await Usuario_AreaBDD.encryptPassword(req.body.passwordnuevo);
         await Usuario_AreaBDD.save();
 
-        res.status(200).json({mgs:"Contraseña actualizada correctamente"});
-    }catch(error){
+        res.status(200).json({ msg: "Contraseña actualizada correctamente" });
+    } catch (error) {
         console.error("Error al actualizar la contraseña:", error.message);
-        res.status(500).json({mgs:"Error del servidor"});
+        res.status(500).json({ msg: "Error del servidor" });
     }
 };
+
 
 const recuperarPassword = async (req, res)=>{
     const{email}= req.body;

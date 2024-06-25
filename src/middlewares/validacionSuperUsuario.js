@@ -42,3 +42,67 @@ export const validacionSuperUsuario = [
         }
     }
 ];
+
+export const validacionActualizarPassword = [
+    check("password")
+        .exists()
+        .withMessage('El campo "password" es obligatorio')
+        .notEmpty()
+        .withMessage('El campo "password" no puede estar vacío')
+        .isLength({ min: 5 })
+        .withMessage('El campo "password" debe tener al menos 5 caracteres')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*).*$/)
+        .withMessage('El campo "password" debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial')
+        .customSanitizer(value => value?.trim()),
+
+    check("confirmpassword")
+        .exists()
+        .withMessage('El campo "confirmpassword" es obligatorio')
+        .notEmpty()
+        .withMessage('El campo "confirmpassword" no puede estar vacío')
+        .custom((value, { req }) => value === req.body.password)
+        .withMessage('Los campos "password" y "confirmpassword" deben coincidir'),
+
+    // Middleware para manejar errores de validación
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (errors.isEmpty()) {
+            return next();
+        } else {
+            return res.status(400).send({ errors: errors.array() });
+        }
+    }
+];
+
+export const validarActualizacionPassword = [
+    check('passwordactual')
+        .exists().withMessage('El campo "passwordactual" es obligatorio')
+        .notEmpty().withMessage('El campo "passwordactual" no puede estar vacío'),
+    
+    check('passwordnuevo')
+        .exists().withMessage('El campo "passwordnuevo" es obligatorio')
+        .notEmpty().withMessage('El campo "passwordnuevo" no puede estar vacío')
+        .isLength({ min: 5 }).withMessage('La nueva contraseña debe tener al menos 5 caracteres')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*).*$/).withMessage('La nueva contraseña debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial'),
+    
+    check('confirmpassword')
+        .exists().withMessage('El campo "confirmpassword" es obligatorio')
+        .notEmpty().withMessage('El campo "confirmpassword" no puede estar vacío')
+        .custom((value, { req }) => {
+            if (value !== req.body.passwordnuevo) {
+                throw new Error('La confirmación de la contraseña no coincide con la nueva contraseña');
+            }
+            return true;
+        }),
+    
+    // Middleware para manejar errores de validación
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    }
+];
+
+
