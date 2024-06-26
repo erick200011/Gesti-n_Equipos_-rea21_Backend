@@ -1,4 +1,4 @@
-import { sendMailToUsuarioArea, sendMailToRecoveryPassword, sendMailToUser } from "../config/nodemailer.js";
+import { sendMailToUsuarioArea, sendMailToRecoveryPasswordCustom} from "../config/nodemailer.js";
 import UsuariosArea from "../models/usuario_areas.js";
 import generarJWT from "../helpers/crearJWT.js";
 //Dentro de la función login, puedes utilizar esta función para verificar la contraseña en la tabla usuarios_areas dentro de la base de datos
@@ -25,9 +25,6 @@ const login = async (req, res) => {
 
         // Verificar la contraseña utilizando el método de instancia
         const verificarPassword = await usuario_AreaBDD.matchPassword(password);
-        console.log('Contraseña ingresada para comparar: ', password);
-        console.log('Contraseña almacenada: ', usuario_AreaBDD.password);
-        console.log('Resultado de comparación: ', verificarPassword);
 
         if (!verificarPassword) {
             return res.status(401).json({ msg: "Contraseña incorrecta" });
@@ -51,16 +48,28 @@ const login = async (req, res) => {
 };
 
 
-const perfil=(req,res)=>{
-    delete req.Usuario_AreaBDD.token
-    delete req.Usuario_AreaBDD.confirmemail
-    delete req.Usuario_AreaBDD._v
-    res.status(200).json(req.Usuario_AreaBDD)
-}
+const perfil = (req, res) => {
+    try {
+        // Accede a los datos del usuario desde req.usuario
+        const { id, nombre, apellido, email, area } = req.usuario;
+
+        // Elimina campos sensibles si es necesario
+        delete req.usuario.token;
+        delete req.usuario.confirmemail;
+        delete req.usuario._v;
+
+        // Responde con los datos del usuario
+        res.status(200).json({ id, nombre, apellido, email, area });
+    } catch (error) {
+        console.error("Error al obtener perfil:", error.message);
+        res.status(500).json({ msg: "Error interno del servidor al obtener perfil" });
+    }
+};
 
 // Ejemplo en el controlador de registro
-const registro = async (req, res) => {
-    const { email, password } = req.body;
+export const registro = async (req, res) => {
+    const { nombre, apellido, email, area } = req.body;
+
     // Validación de campos
     if (Object.values(req.body).includes("")) {
         return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
@@ -72,28 +81,33 @@ const registro = async (req, res) => {
         return res.status(400).json({ msg: "Lo sentimos, el email ya se encuentra registrado" });
     }
 
-    // Crear un nuevo usuario sin guardarlo en la base de datos todavía
-    const nuevoUsuario = new UsuariosArea(req.body);
-    console.log("Contraseña antes de hash: ", password);
-    nuevoUsuario.password = await nuevoUsuario.encryptPassword(password);
-    console.log("Contraseña después de hash: ", nuevoUsuario.password);
+    // Generar una contraseña aleatoria
+    const generatedPassword = Math.random().toString(36).slice(2);
 
-    // Generar y enviar el token de confirmación por correo electrónico
+    // Crear un nuevo usuario con la contraseña generada
+    const nuevoUsuario = new UsuariosArea({
+        nombre,
+        apellido,
+        email,
+        area,
+        password: generatedPassword
+    });
+
     try {
-        const token = await nuevoUsuario.crearToken();  // Esperar la resolución de la Promesa
-        await sendMailToUser(email, token);
-        //console.log("El correo se envió");
+        // Guardar el usuario en la base de datos
+        await nuevoUsuario.save();
+
+        // Generar y enviar el token de confirmación por correo electrónico
+        const token = await nuevoUsuario.crearToken();
+
+        // Enviar la contraseña generada por correo
+        await sendMailToUsuarioArea(email, generatedPassword, token);
+
+        res.status(201).json({ msg: 'Usuario registrado exitosamente. Revisa tu correo para la contraseña.' });
     } catch (error) {
-        console.error("Error al generar el token o enviar el correo:", error);
-        return res.status(500).json({ msg: "Error interno del servidor" });
+        console.error("Error al registrar usuario: ", error);
+        res.status(500).json({ msg: "Error al registrar usuario", error });
     }
-
-    // Responder al cliente para que revise su correo electrónico
-    res.status(200).json({ msg: "Revisa tu correo electrónico para confirmar tu cuenta" });
-
-    // Una vez que el usuario confirme su correo electrónico, guardar el usuario en la base de datos
-    // (Esto podría hacerse en otro controlador que maneje la confirmación del correo electrónico)
-    // await nuevoUsuario.save();
 };
 
 
@@ -102,7 +116,7 @@ const confirmEmail = async (req, res) => {
 
     const token = req.params.token;
     if (!token) {
-        return res.status(400).json({ msg: "Lo sentimos, no se puede validar la cuenta" });
+        return res.status(400).json({ msg: "Lo sentimos, no se puede validar la cuenta porque no se ha proporcionado un token" });
     }
 
     try {
@@ -112,28 +126,42 @@ const confirmEmail = async (req, res) => {
         console.log("Usuario encontrado:", usuarioAreaBDD);
 
         if (!usuarioAreaBDD) {
-            return res.status(404).json({ msg: "Token inválido o la cuenta ya ha sido confirmada" });
+            return res.status(404).json({ msg: "Token inválido o la cuenta ya ha sido confirmada previamente" });
         }
 
         if (usuarioAreaBDD.confirmemail) {
-            return res.status(400).json({ msg: "La cuenta ya ha sido confirmada" });
+            return res.status(400).json({ msg: "La cuenta ya ha sido confirmada anteriormente" });
         }
 
         usuarioAreaBDD.confirmemail = true;
         usuarioAreaBDD.token = null;
         await usuarioAreaBDD.save();
 
-        res.status(200).json({ msg: "Cuenta confirmada y token eliminado. Puedes iniciar sesión." });
+        res.status(200).json({ msg: "Cuenta confirmada exitosamente. Ahora puedes iniciar sesión." });
     } catch (error) {
-        console.error(error);
+        console.error("Error al confirmar el correo electrónico:", error);
         res.status(500).json({ msg: "Error del servidor al confirmar el correo electrónico" });
     }
 };
 
+const listarUsuariosAreas =async (req,res)=>{
+    try {
+        // Obtener todos los usuarios de la base de datos
+        const usuariosAreas = await UsuariosArea.findAll({
+            attributes: { exclude: ['password'] } // Excluir el campo de contraseña si es sensible
+        });
 
+        // Verificar si se encontraron usuarios
+        if (!usuariosAreas || usuariosAreas.length === 0) {
+            return res.status(404).json({ msg: "No se encontraron usuarios por áreas registrados" });
+        }
 
-const listarUsuariosAreas =(req,res)=>{
-    res.status(200).json({res:'Lista de los usuarios por areas registrados'})
+        // Devolver la lista de usuarios como respuesta
+        res.status(200).json({ usuariosAreas });
+    } catch (error) {
+        console.error("Error al listar usuarios por áreas:", error);
+        res.status(500).json({ msg: "Error interno del servidor al listar usuarios por áreas" });
+    }
 };
 
 const detalleUsuarioArea= async(req,res)=>{
@@ -159,41 +187,44 @@ const detalleUsuarioArea= async(req,res)=>{
     }
 };
 
-const actualizarPerfil = async (req,res) => {
-    const {id}= req.params;
+const actualizarPerfil = async (req, res) => {
+    const { id } = req.params;
 
-    try{
-        //Verifica si el ID es un número entero válido
-        if (isNaN(id)){
-            return res.status(404).json({mgs:"Lo sentimos el identificador debe ser un número único"})
+    try {
+        // Verificar si el ID es un número entero válido
+        if (isNaN(id)) {
+            return res.status(404).json({ msg: "Lo sentimos, el identificador debe ser un número único" });
         }
 
-        //Verifica si se proporcionaron los campos
-        if (Object.values(req.body).some(value=> value === undefined || value === '')){
-            return res.status(400).json({msg: "Lo sentimos, debes llenar todos los campos"});
+        // Verificar si se proporcionaron los campos
+        if (Object.values(req.body).some(value => value === undefined || value === '')) {
+            return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
         }
 
-        //Busca al usuarioArea por su ID
-        const Usuario_AreaBDD =await UsuariosArea.findByPk(id);
+        // Buscar al usuarioArea por su ID
+        const Usuario_AreaBDD = await UsuariosArea.findByPk(id);
 
-        //Verifica si se encontró por su ID
-        if(!Usuario_AreaBDD){
-            return res.status(404).json({mgs:`Lo sentimos, no existe un usuario con el identificador ${id}`});
+        // Verificar si se encontró por su ID
+        if (!Usuario_AreaBDD) {
+            return res.status(404).json({ msg: `Lo sentimos, no existe un usuario con el identificador ${id}` });
         }
 
         // Verificar si se está intentando cambiar el correo electrónico y si ya existe en otro usuario
-        if (req.body.email && req.body.email !== Usuario_AreaBDD.email){
-            const Usuario_AreaExistente = await UsuariosArea.findOne({where: {email: req.body.email}});
-            if(Usuario_AreaExistente){
-                return res.status(400).json({mgs: "Lo sentimos, el correo ya esta registrado con otro usuario"});
-
+        if (req.body.email && req.body.email !== Usuario_AreaBDD.email) {
+            const Usuario_AreaExistente = await UsuariosArea.findOne({ where: { email: req.body.email } });
+            if (Usuario_AreaExistente) {
+                return res.status(400).json({ msg: "Lo sentimos, el correo ya está registrado con otro usuario" });
             }
         }
 
-        // Actualiza los campos del Usuario por areas
+        // Actualizar los campos del Usuario por áreas
         await Usuario_AreaBDD.update(req.body);
-    }catch(error){
-        res.status(500).json({msg: "Error del servidor"});
+
+        // Responder con éxito
+        res.status(200).json({ msg: "Perfil actualizado correctamente" });
+    } catch (error) {
+        console.error("Error al actualizar perfil:", error.message);
+        res.status(500).json({ msg: "Error del servidor al actualizar perfil" });
     }
 };
 
@@ -231,39 +262,41 @@ const actualizarPassword = async (req, res) => {
 };
 
 
-const recuperarPassword = async (req, res)=>{
-    const{email}= req.body;
-    // Verificamos si se proporciono un corre válido
-    if (!email){
-        return res.status(400).json({msg: "Deber ingresar un correo electrónico"})
+
+const recuperarPassword = async (req, res) => {
+    const { email } = req.body;
+
+    // Verificamos si se proporcionó un correo válido
+    if (!email) {
+        return res.status(400).json({ msg: "Debe ingresar un correo electrónico" });
     }
 
-    try{
+    try {
         // Buscar al usuario en la base de datos
-        const Usuario_AreaBDD = await UsuariosArea.findOne({where:{email}});
+        const Usuario_AreaBDD = await UsuariosArea.findOne({ where: { email } });
 
-        //Si no se encuentra al usurio, devolver un mensaje de error
-        if(!Usuario_AreaBDD){
-            return res.status(404).json({mgs: "Lo sentimos, el usuario no se encuetra registrado"});
+        // Si no se encuentra al usuario, devolver un mensaje de error
+        if (!Usuario_AreaBDD) {
+            return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" });
         }
 
-        //Crear un token de recuperación de contraseña
+        // Crear un token de recuperación de contraseña
         const token = await Usuario_AreaBDD.crearToken();
 
-        //Actualizar el token en la base de datos
-        Usuario_AreaBDD.token=token;
-        Usuario_AreaBDD.password= ''; //// Establecer la contraseña a una cadena vacía
+        // Actualizar el token en la base de datos
+        Usuario_AreaBDD.token = token;
+        Usuario_AreaBDD.password = ''; // Establecer la contraseña a una cadena vacía
         await Usuario_AreaBDD.save();
 
-        // Enviar correo eléctronico de recuperación de contraseña
-        await sendMailToRecoveryPassword(email, token);
+        // Enviar correo electrónico de recuperación de contraseña
+        await sendMailToRecoveryPasswordCustom(email, token);
 
-        //Respuesta existosa
-        res.status(200).json({msg:"Revisa tu correo electrónico para restablecer tu contraseña"})
-    }catch(error){
-        // Menejar errores
+        // Respuesta exitosa
+        res.status(200).json({ msg: "Revisa tu correo electrónico para restablecer tu contraseña" });
+    } catch (error) {
+        // Manejar errores
         console.error('Error al recuperar contraseña:', error.message);
-        res.status(500).json({msg: "Error interno del servidor"});
+        res.status(500).json({ msg: "Error interno del servidor" });
     }
 };
 
@@ -328,22 +361,16 @@ const nuevoPassword = async (req, res) => {
 
 const eliminarUsuario = async (req, res) => {
     const { id } = req.params;
-    const { salida } = req.body;
-
-    // Validación de campos
-    if (Object.values(req.body).includes("")) {
-        return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
-    }
 
     try {
         // Validar si el usuario existe
         const usuario = await UsuariosArea.findByPk(id);
         if (!usuario) {
-            return res.status(404).json({ msg: `Lo sentimos, no existe el usuario del área ${id}` });
+            return res.status(404).json({ msg: `Lo sentimos, no existe el usuario` });
         }
 
-        // Actualizar el usuario por su ID
-        await UsuariosArea.update({ salida: Date.parse(salida), estado: false }, { where: { id } });
+        // Eliminar el usuario por su ID
+        await UsuariosArea.destroy({ where: { id } });
 
         // Responder al cliente indicando que el usuario ha sido eliminado
         res.status(200).json({ msg: "Usuario del área eliminado exitosamente" });

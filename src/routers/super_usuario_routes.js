@@ -9,7 +9,6 @@ router.post('/login', superUsuarioController.login);
 
 // Ruta para registro de nuevos usuarios
 router.post('/registro', validacionSuperUsuario,superUsuarioController.registro);
-//router.get('/registro', superUsuarioController.registro);
 
 // Ruta para confirmar email
 router.get('/confirmar/:token', superUsuarioController.confirmEmail);

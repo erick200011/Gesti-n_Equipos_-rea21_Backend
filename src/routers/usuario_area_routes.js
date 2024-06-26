@@ -1,7 +1,8 @@
 import {Router} from 'express'
 const router = Router()
 import UsuarioArea from '../controllers/usuarios_areas_controller.js'
-import { verificarAutenticacion } from '../middlewares/autenticacion.js';
+import { verificarAutenticacion} from '../middlewares/autenticacion.js';
+import { validacionActualizarPassword, validarActualizacionPassword } from '../middlewares/validacionSuperUsuario.js';
 
 /*-------------------------------------------------------------------------------*/ 
 //ruta para login 
@@ -22,12 +23,12 @@ router.delete('/usuarioArea/eliminar/:id',verificarAutenticacion,UsuarioArea.eli
 // Ruta para confirmar email
 router.get('/usuarioArea/confirmar/:token',UsuarioArea.confirmEmail);
 //ruta para actualizar la contraseña del usuario
-router.put('/usuarioArea/usuario/actualizarpassword',verificarAutenticacion,UsuarioArea.actualizarPassword);
+router.put('/usuarioArea/usuario/actualizarpassword',verificarAutenticacion,validarActualizacionPassword,UsuarioArea.actualizarPassword);
 //ruta para recuperar la contraseña del usuario por areas
 router.post('/usuarioArea/recuperar-password',UsuarioArea.recuperarPassword);
 //ruta para comprobar el token de recuperación por areas
 router.get('/usuarioArea/recuperar-password/:token',UsuarioArea.comprobarTokenPasword);
 //ruta para añadir la nueva contraseña por area
-router.post('/usuarioArea/nuevo-password/:token', UsuarioArea.nuevoPassword);
+router.post('/usuarioArea/nuevo-password/:token',validacionActualizarPassword, UsuarioArea.nuevoPassword);
 
 export default router

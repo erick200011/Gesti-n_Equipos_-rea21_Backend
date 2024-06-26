@@ -51,8 +51,8 @@ const sendMailToRecoveryPassword = async(userMail, token) => {
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 };
 
-const sendMailToUsuarioArea = async(userMail, password, token) => {
-    let info = await transporter.sendMail({
+const sendMailToUsuarioArea = async (userMail, password, token) => {
+    const info = await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: userMail,
         subject: "Correo de bienvenida",
@@ -68,8 +68,31 @@ const sendMailToUsuarioArea = async(userMail, password, token) => {
     console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
 };
 
+const sendMailToRecoveryPasswordCustom = async (userMail, token) => {
+    try {
+        let info = await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: userMail,
+            subject: "Recuperación de contraseña",
+            html: `
+            <h1>Sistema de gestión (IAMQ-QUITO 🐶 😺)</h1>
+            <hr>
+            <p>Para restablecer tu contraseña, haz clic en el siguiente enlace:</p>
+            <a href="${process.env.URL_BACKEND}/usuarioArea/recuperar-password/${encodeURIComponent(token)}">Restablecer contraseña</a>
+            <hr>
+            <footer>IAMQ te da la Bienvenida!</footer>
+            `
+        });
+        console.log("Correo de recuperación enviado: ", info.messageId);
+    } catch (error) {
+        console.error("Error al enviar el correo de recuperación:", error);
+        throw new Error("Error al enviar el correo de recuperación");
+    }
+};
+
 export {
     sendMailToUser,
     sendMailToRecoveryPassword,
-    sendMailToUsuarioArea
+    sendMailToUsuarioArea,
+    sendMailToRecoveryPasswordCustom
 };

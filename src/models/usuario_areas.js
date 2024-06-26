@@ -4,11 +4,7 @@ import sequelize from '../database.js';
 
 class UsuariosArea extends Model {
     async matchPassword(password) {
-        console.log("Contraseña ingresada para comparar: ", password);
-        console.log("Contraseña almacenada: ", this.password);
-        const result = await bcrypt.compare(password, this.password);
-        console.log("Resultado de comparación: ", result);
-        return result;
+        return await bcrypt.compare(password, this.password);
     }
 
     async crearToken() {
@@ -66,9 +62,10 @@ UsuariosArea.init({
     timestamps: false,
     hooks: {
         beforeCreate: async (usuarioArea, options) => {
-            const salt = await bcrypt.genSalt(10);
-            usuarioArea.password = await bcrypt.hash(usuarioArea.password, salt);
-            console.log("Contraseña hash generada: ", usuarioArea.password);
+            if (usuarioArea.password) {
+                const salt = await bcrypt.genSalt(10);
+                usuarioArea.password = await bcrypt.hash(usuarioArea.password, salt);
+            }
         },
     },
 });

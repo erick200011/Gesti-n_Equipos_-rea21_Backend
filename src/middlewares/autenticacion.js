@@ -28,12 +28,12 @@ export const verificarAutenticacion = async (req, res, next) => {
                 throw new Error("Usuario no encontrado");
             }
             req.usuario = superUsuarioBDD.toJSON();
-        } else if (rol === "usuarios_area") {
-            const usuarioAreaBDD = await UsuariosArea.findByPk(id, { attributes: { exclude: ['password'] } });
-            if (!usuarioAreaBDD) {
+        } else if (rol === "UsuariosArea") {
+            const usuariosAreaBDD = await UsuariosArea.findByPk(id, { attributes: { exclude: ['password'] } });
+            if (!usuariosAreaBDD) {
                 throw new Error("Usuario por área no encontrado");
             }
-            req.usuario = usuarioAreaBDD.toJSON();
+            req.usuario = usuariosAreaBDD.toJSON();
         } else {
             throw new Error("Rol de usuario no válido");
         }
