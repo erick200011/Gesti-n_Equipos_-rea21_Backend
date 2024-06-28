@@ -5,6 +5,7 @@ import cors from 'cors';
 import router from './routers/super_usuario_routes.js';
 import routerUsuariosArea from './routers/usuario_area_routes.js';
 import routerEquipos from './routers/Equipos_routes.js';
+import routerMantenimiento from './routers/Mantenimiento_routes.js'
 
 // Inicializaciones
 const app = express();
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 app.use('/api', router);
 app.use('/api', routerUsuariosArea);
 app.use('/api', routerEquipos);
+app.use('/api', routerMantenimiento);
 
 // Manejo de ruta no encontrada
 app.use((req, res) => res.status(404).send("Endpoint no encontrado - 404"));
