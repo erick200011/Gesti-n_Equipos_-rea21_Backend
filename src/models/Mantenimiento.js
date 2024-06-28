@@ -37,6 +37,10 @@ Mantenimiento.init({
     comentario: {
         type: DataTypes.STRING,
         allowNull: true,
+    },
+    area: {
+        type: DataTypes.STRING,
+        allowNull: false,
     }
 }, {
     sequelize,
