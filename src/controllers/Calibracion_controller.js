@@ -3,7 +3,7 @@ import Equipos from '../models/Equipos.js';
 import { Op } from 'sequelize';
 import sequelize from '../database.js';
 
-// Crear una nueva calibración
+//Crear calibracion
 export const crearCalibracion = async (req, res) => {
     try {
         const usuario = req.superUsuarioBDD || req.usuariosAreaBDD;
@@ -24,9 +24,16 @@ export const crearCalibracion = async (req, res) => {
             return res.status(403).json({ msg: "No tienes permiso para crear una calibración en esta área" });
         }
 
+        const existingCalibracion = await Calibracion.findOne({ where: { idcod_calibracion } });
+
+        if (existingCalibracion) {
+            return res.status(409).json({ msg: "La calibración con este ID ya existe" });
+        }
+
         const area = equipo.area.toLowerCase();
 
         const calibracion = await Calibracion.create({
+            idpr_calibracion: null,
             ul_fecha_cal_in,
             prox_fecha_cal_in,
             ul_fecha_cal_ex,

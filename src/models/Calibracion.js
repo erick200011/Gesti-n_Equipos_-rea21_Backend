@@ -32,7 +32,7 @@ Calibracion.init({
     },
     idpr_calibracion: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
     },
     comentarios: {
         type: DataTypes.STRING,
