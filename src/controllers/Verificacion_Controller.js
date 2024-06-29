@@ -24,10 +24,14 @@ export const crearVerificacion = async (req, res) => {
             return res.status(403).json({ msg: "No tienes permiso para crear una verificación en esta área" });
         }
 
-        const area = equipo.area.toLowerCase(); // Convertir el área a minúsculas
+        //const area = equipo.area.toLowerCase();
+        const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        };
+        
+        const area = capitalizeFirstLetter(equipo.area);        
 
         const verificacion = await Verificacion.create({
-            proveedor_idpr: null, // Asignar null si no es necesario
             id_equipo,
             ver_interna,
             ver_externa,

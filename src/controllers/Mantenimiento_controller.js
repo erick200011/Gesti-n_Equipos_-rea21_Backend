@@ -12,7 +12,7 @@ export const crearMantenimiento = async (req, res) => {
             return res.status(403).json({ msg: "No tienes permiso para realizar esta acción" });
         }
 
-        const { ul_fecha_man_in, prox_fecha_man_in, ul_fecha_man_ex, prox_fecha_man_ex, proveedor_idpr, id_equipo, comentario } = req.body;
+        const { ul_fecha_man_in, prox_fecha_man_in, ul_fecha_man_ex, prox_fecha_man_ex, id_equipo, comentario } = req.body;
 
         // Verificar si el equipo ya tiene un mantenimiento registrado
         const mantenimientoExistente = await Mantenimiento.findOne({ where: { id_equipo } });
@@ -30,14 +30,19 @@ export const crearMantenimiento = async (req, res) => {
             return res.status(403).json({ msg: "No tienes permiso para crear un mantenimiento en esta área" });
         }
 
-        const area = equipo.area.toLowerCase(); // Convertir el área a minúsculas
+        //const area = equipo.area.toLowerCase();
+        const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        };
+        
+        const area = capitalizeFirstLetter(equipo.area);
+        
 
         const mantenimiento = await Mantenimiento.create({
             ul_fecha_man_in,
             prox_fecha_man_in,
             ul_fecha_man_ex,
             prox_fecha_man_ex,
-            proveedor_idpr,
             id_equipo,
             comentario,
             area

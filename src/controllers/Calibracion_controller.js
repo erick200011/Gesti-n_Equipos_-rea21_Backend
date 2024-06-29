@@ -30,10 +30,14 @@ export const crearCalibracion = async (req, res) => {
             return res.status(409).json({ msg: "La calibración con este ID ya existe" });
         }
 
-        const area = equipo.area.toLowerCase();
+        //const area = equipo.area.toLowerCase();
+        const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        };
+        
+        const area = capitalizeFirstLetter(equipo.area);        
 
         const calibracion = await Calibracion.create({
-            idpr_calibracion: null,
             ul_fecha_cal_in,
             prox_fecha_cal_in,
             ul_fecha_cal_ex,

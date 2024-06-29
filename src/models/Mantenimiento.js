@@ -1,5 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../database.js'; // Asegúrate de que la conexión a la base de datos esté configurada correctamente
+import Equipos from './Equipos.js'
 
 class Mantenimiento extends Model {}
 
@@ -26,13 +27,13 @@ Mantenimiento.init({
         type: DataTypes.DATE,
         allowNull: true,
     },
-    proveedor_idpr: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-    },
     id_equipo: {
         type: DataTypes.STRING,
         allowNull: false,
+        references:{
+            model: Equipos,
+            key: 'idcod'
+        },
     },
     comentario: {
         type: DataTypes.STRING,

@@ -1,5 +1,7 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../database.js';
+import Equipos from './Equipos.js'
+
 
 class Verificacion extends Model {}
 
@@ -10,13 +12,13 @@ Verificacion.init({
         autoIncrement: true,
         allowNull: false,
     },
-    proveedor_idpr: {
-        type: DataTypes.INTEGER,
-        allowNull: true, // Permitir valores nulos
-    },
     id_equipo: {
         type: DataTypes.STRING,
         allowNull: false,
+        references:{
+            model: Equipos,
+            key: 'idcod'
+        },
     },
     ver_interna: {
         type: DataTypes.STRING,

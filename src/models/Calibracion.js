@@ -1,5 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../database.js'; // Asegúrate de que la conexión a la base de datos esté configurada correctamente
+import Equipos from './Equipos.js'
 
 class Calibracion extends Model {}
 
@@ -29,10 +30,10 @@ Calibracion.init({
     idcod_calibracion: {
         type: DataTypes.STRING,
         allowNull: false,
-    },
-    idpr_calibracion: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
+        references:{
+            model: Equipos,
+            key: 'idcod'
+        },
     },
     comentarios: {
         type: DataTypes.STRING,
