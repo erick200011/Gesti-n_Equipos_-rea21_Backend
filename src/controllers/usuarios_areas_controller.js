@@ -51,7 +51,7 @@ const login = async (req, res) => {
 const perfil = (req, res) => {
     try {
         // Accede a los datos del usuario desde req.usuario
-        const { id, nombre, apellido, email, area } = req.usuario;
+        const { id, nombre, apellido, email, area } = req.usuarioAreaBDD;
 
         // Elimina campos sensibles si es necesario
         delete req.usuario.token;
@@ -229,7 +229,7 @@ const actualizarPerfil = async (req, res) => {
 };
 
 const actualizarPassword = async (req, res) => {
-    const { id } = req.usuario;
+    const { id } = req.usuarioAreaBDD;
 
     if (!id) {
         return res.status(400).json({ msg: "ID de usuario no está definido en la solicitud" });

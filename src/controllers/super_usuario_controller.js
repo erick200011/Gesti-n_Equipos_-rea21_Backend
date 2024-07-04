@@ -36,7 +36,7 @@ const login = async (req, res) => {
 };
 
 const perfil = (req, res) => {
-    const usuario = req.usuario;
+    const usuario = req.superUsuarioBDD;
 
     if (!usuario) {
         return res.status(404).json({ msg: "Usuario no encontrado" });
@@ -164,7 +164,7 @@ const actualizarPerfil = async (req, res) => {
 };
 
 const actualizarPassword = async (req, res) => {
-    const { id } = req.usuario; // Obtener el ID del super usuario desde la solicitud
+    const { id } = req.superUsuarioBDD; // Obtener el ID del super usuario desde la solicitud
 
     const { passwordactual, passwordnuevo, confirmpassword } = req.body;
 
