@@ -15,13 +15,13 @@ dotenv.config();
 
 // Configuraciones
 app.set('port', process.env.PORT || 3000);
-app.use(cors());
-
-// Middlewares
-app.use(express.json());
 app.use(cors({
     origin: 'https://gestion-de-equipos-frontend.netlify.app/'
   }));
+
+// Middlewares
+app.use(express.json());
+//app.use(cors());
 // Rutas
 app.get('/', (req, res) => {
     res.send("Server on");
