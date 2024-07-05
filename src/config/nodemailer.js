@@ -20,7 +20,7 @@ const sendMailToUser = (userMail, token) => {
             to: userMail,
             subject: "Bienvenido a IAMQ Quito - Sistema de Gestión de Equipos",
             html: `<p>Bienvenido a IAMQ Quito - Sistema de Gestión de Equipos.</p>
-                   <p>Por favor, haz clic <a href="${process.env.URL_BACKEND}/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
+                   <p>Por favor, haz clic <a href="https://gestion-de-equipos-frontend.netlify.app/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>`
         };
 
         transporter.sendMail(mailOptions, function(error, info){
@@ -43,7 +43,7 @@ const sendMailToRecoveryPassword = async(userMail, token) => {
         html: `
         <h1>Sistema de gestión (IAMQ-QUITO 🐶 😺)</h1>
         <hr>
-        <a href="${process.env.URL_BACKEND}/recuperar-password/${encodeURIComponent(token)}">Clic para reestablecer tu contraseña</a>
+        <a href=" https://gestion-de-equipos-frontend.netlify.app/recuperar-password/${encodeURIComponent(token)}">Clic para reestablecer tu contraseña</a>
         <hr>
         <footer>IAMQ te da la Bienvenida!</footer>
         `
@@ -60,7 +60,7 @@ const sendMailToUsuarioArea = async (userMail, password, token) => {
         <h1>Sistema de gestión de equipos (Quito-IAMQ 🐶 😺)</h1>
         <hr>
         <p>Contraseña de acceso: ${password}</p>
-        <p>Por favor, haz clic <a href="${process.env.URL_BACKEND}/usuarioArea/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>
+        <p>Por favor, haz clic <a href="https://gestion-de-equipos-frontend.netlify.app/usuarioArea/confirmar/${encodeURIComponent(token)}">aquí</a> para confirmar tu cuenta.</p>
         <hr>
         <footer>Bienvenid@!</footer>
         `
@@ -78,7 +78,7 @@ const sendMailToRecoveryPasswordCustom = async (userMail, token) => {
             <h1>Sistema de gestión (IAMQ-QUITO 🐶 😺)</h1>
             <hr>
             <p>Para restablecer tu contraseña, haz clic en el siguiente enlace:</p>
-            <a href="${process.env.URL_BACKEND}/usuarioArea/recuperar-password/${encodeURIComponent(token)}">Restablecer contraseña</a>
+            <a href="https://gestion-de-equipos-frontend.netlify.app/usuarioArea/recuperar-password/${encodeURIComponent(token)}">Restablecer contraseña</a>
             <hr>
             <footer>IAMQ te da la Bienvenida!</footer>
             `
