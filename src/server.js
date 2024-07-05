@@ -12,6 +12,7 @@ import routerCalibracion from './routers/Calibracion_routes.js'
 // Inicializaciones
 const app = express();
 dotenv.config();
+const cors = require('cors')
 
 // Configuraciones
 app.set('port', process.env.PORT || 3000);
@@ -19,7 +20,9 @@ app.use(cors());
 
 // Middlewares
 app.use(express.json());
-
+app.use(cors({
+    origin: 'https://gestion-de-equipos-frontend.netlify.app/'
+  }));
 // Rutas
 app.get('/', (req, res) => {
     res.send("Server on");
