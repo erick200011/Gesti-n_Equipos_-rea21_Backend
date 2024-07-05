@@ -12,7 +12,6 @@ import routerCalibracion from './routers/Calibracion_routes.js'
 // Inicializaciones
 const app = express();
 dotenv.config();
-const cors = require('cors')
 
 // Configuraciones
 app.set('port', process.env.PORT || 3000);
