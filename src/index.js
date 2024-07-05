@@ -4,7 +4,7 @@ import app from './server.js';
 import sequelize from './database.js';
 
 // Configurar el puerto
-const port = app.get('port');
+const port = process.env.PORT || app.get('port');
 
 // Función para iniciar el servidor y la conexión con la base de datos
 async function startServer() {
@@ -17,9 +17,9 @@ async function startServer() {
         await sequelize.sync({ force: false });
         console.log('Modelos sincronizados correctamente.');
 
-        // Escuchar en el puerto configurado
-        app.listen(port, () => {
-            console.log(`Servidor escuchando en http://localhost:${port}`);
+        // Escuchar en el puerto configurado en todas las interfaces
+        app.listen(port, '0.0.0.0', () => {
+            console.log(`Servidor escuchando en http://0.0.0.0:${port}`);
         });
     } catch (error) {
         console.error('Error al iniciar la aplicación:', error);
