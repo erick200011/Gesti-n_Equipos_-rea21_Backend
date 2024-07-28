@@ -50,13 +50,18 @@ const login = async (req, res) => {
 
 const perfil = (req, res) => {
     try {
-        // Accede a los datos del usuario desde req.usuario
-        const { id, nombre, apellido, email, area } = req.usuarioAreaBDD;
+        // Verifica si req.usuariosAreaBDD está definido
+        if (!req.usuariosAreaBDD) {
+            return res.status(404).json({ msg: "Usuario no encontrado" });
+        }
+
+        // Accede a los datos del usuario desde req.usuariosAreaBDD
+        const { id, nombre, apellido, email, area } = req.usuariosAreaBDD;
 
         // Elimina campos sensibles si es necesario
-        delete req.usuario.token;
-        delete req.usuario.confirmemail;
-        delete req.usuario._v;
+        delete req.usuariosAreaBDD.token;
+        delete req.usuariosAreaBDD.confirmemail;
+        delete req.usuariosAreaBDD._v;
 
         // Responde con los datos del usuario
         res.status(200).json({ id, nombre, apellido, email, area });
@@ -65,6 +70,7 @@ const perfil = (req, res) => {
         res.status(500).json({ msg: "Error interno del servidor al obtener perfil" });
     }
 };
+
 
 // Ejemplo en el controlador de registro
 export const registro = async (req, res) => {
