@@ -49,10 +49,7 @@ Equipos.init({
         type: DataTypes.STRING,
         allowNull: false,
     },
-    idsupus: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    }
+
 }, {
     sequelize,
     modelName: 'Equipos',

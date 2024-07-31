@@ -15,7 +15,7 @@ export const crearEquipo = async (req, res) => {
             return res.status(403).json({ msg: "No tienes permiso para crear un equipo en esta área" });
         }
 
-        const { idcod, descripcion, marca, modelos, nserie, accesorios, fabricante, caracteristicas, con_instalacion, con_utilizacion, area, idsupus } = req.body;
+        const { idcod, descripcion, marca, modelos, nserie, accesorios, fabricante, caracteristicas, con_instalacion, con_utilizacion, area } = req.body;
 
         if (!idcod || !descripcion || !marca || !modelos || !nserie || !accesorios || !fabricante || !caracteristicas || !con_instalacion || !con_utilizacion || !area) {
             return res.status(400).json({ msg: "Todos los campos son obligatorios" });
@@ -32,8 +32,7 @@ export const crearEquipo = async (req, res) => {
             caracteristicas,
             con_instalacion,
             con_utilizacion,
-            area,
-            idsupus
+            area
         });
 
         res.status(201).json(equipo);
