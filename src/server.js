@@ -34,5 +34,7 @@ app.use('/api', routerCalibracion);
 // Manejo de ruta no encontrada
 app.use((req, res) => res.status(404).send("Endpoint no encontrado - 404"));
 
+
+
 // Exportar la instancia de express por medio de app
 export default app;
