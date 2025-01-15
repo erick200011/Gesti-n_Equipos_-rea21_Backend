@@ -1,7 +1,7 @@
 node_modules/
 .env/
-app.test.js/
-babel.config.js/
-jest.config.js/
-load-test.yml/
+app.test.js
+babel.config.js
+jest.config.js
+load-test.yml
 stress-test.js
